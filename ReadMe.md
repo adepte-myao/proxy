@@ -16,6 +16,8 @@ This application was designed for personal education purposes.
 ## Simple request:
 "http://localhost:9091/"
 
+Response: "Hello from server"
+
 ## Get Links request example:
 "http://localhost:9091/get-links"
 
@@ -23,3 +25,5 @@ Body:
 {
     "link": "https://vk.com/"
 }
+
+Response: all external links of given page
