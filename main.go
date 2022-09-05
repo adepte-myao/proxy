@@ -16,8 +16,10 @@ func main() {
 	l := log.New(os.Stdout, "myao-proxy", log.LstdFlags)
 
 	lh := handlers.NewLinksHandler(l)
+	ph := handlers.NewPinger(l)
 
 	sm := mux.NewRouter()
+	sm.HandleFunc("/", ph.Ping)
 	sm.HandleFunc("/get-links", lh.FindAllLinks)
 
 	server := &http.Server{
