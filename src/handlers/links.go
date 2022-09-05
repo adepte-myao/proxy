@@ -59,12 +59,12 @@ func (lh LinksHandler) FindAllLinks(rw http.ResponseWriter, r *http.Request) {
 
 	bodyString := string(bodyBytes)
 
-	reg := regexp.MustCompile(`<a.*>.*</a>`)
+	reg := regexp.MustCompile(`href="[^"]*://[^"]*"`)
 	entries := reg.FindAllString(bodyString, -1)
 
 	rw.WriteHeader(http.StatusOK)
 	for _, v := range entries {
-		rw.Write([]byte(v))
+		rw.Write([]byte(v[5:]))
 		rw.Write([]byte("\n"))
 	}
 }
