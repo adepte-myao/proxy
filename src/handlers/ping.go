@@ -1,15 +1,15 @@
 package handlers
 
 import (
-	"log"
 	"net/http"
+	"proxy/src/loggers"
 )
 
 type Pinger struct {
-	l *log.Logger
+	l *loggers.AggregatedLoggers
 }
 
-func NewPinger(l *log.Logger) *Pinger {
+func NewPinger(l *loggers.AggregatedLoggers) *Pinger {
 	return &Pinger{l}
 }
 

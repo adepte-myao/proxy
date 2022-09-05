@@ -2,21 +2,31 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"proxy/src/handlers"
+	"proxy/src/loggers"
 	"time"
 
 	"github.com/gorilla/mux"
 )
 
 func main() {
-	l := log.New(os.Stdout, "myao-proxy", log.LstdFlags)
+	fo, err := os.Create("log.txt")
+	if err != nil {
+		fmt.Println("Couldn't open the file, stop executing")
+		return
+	}
 
-	lh := handlers.NewLinksHandler(l)
-	ph := handlers.NewPinger(l)
+	filelog := log.New(fo, "myao-proxy", log.LstdFlags)
+	conslog := log.New(os.Stdout, "myao-proxy", log.LstdFlags)
+	logger := loggers.NewAggregatedLoggers(filelog, conslog)
+
+	lh := handlers.NewLinksHandler(logger)
+	ph := handlers.NewPinger(logger)
 
 	sm := mux.NewRouter()
 	sm.HandleFunc("/", ph.Ping)
@@ -31,11 +41,11 @@ func main() {
 	}
 
 	go func() {
-		l.Println("Starting server on port 9091")
+		logger.Println("Starting server on port 9091")
 
 		err := server.ListenAndServe()
 		if err != nil {
-			l.Printf("Error starting server: %s\n", err)
+			logger.Printf("Error starting server: %s\n", err)
 			os.Exit(1)
 		}
 	}()
@@ -44,7 +54,7 @@ func main() {
 	signal.Notify(sigChan, os.Interrupt)
 
 	sig := <-sigChan
-	l.Println("Received terminate, graceful shutdown. Signal:", sig)
+	logger.Println("Received terminate, graceful shutdown. Signal:", sig)
 
 	tc, cancelFunc := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancelFunc()

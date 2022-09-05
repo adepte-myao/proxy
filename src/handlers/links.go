@@ -3,17 +3,17 @@ package handlers
 import (
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
 	"proxy/src/dto"
+	"proxy/src/loggers"
 	"regexp"
 )
 
 type LinksHandler struct {
-	l *log.Logger
+	l *loggers.AggregatedLoggers
 }
 
-func NewLinksHandler(l *log.Logger) *LinksHandler {
+func NewLinksHandler(l *loggers.AggregatedLoggers) *LinksHandler {
 	return &LinksHandler{l}
 }
 
