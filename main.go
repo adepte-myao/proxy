@@ -15,12 +15,9 @@ import (
 func main() {
 	l := log.New(os.Stdout, "myao-proxy", log.LstdFlags)
 
-	nh := handlers.NewNewsHandler(l)
 	lh := handlers.NewLinksHandler(l)
 
 	sm := mux.NewRouter()
-	sm.HandleFunc("/news", nh.GetSimpleRequest)
-	sm.HandleFunc("/tpu-news", nh.TPURequest)
 	sm.HandleFunc("/get-links", lh.FindAllLinks)
 
 	server := &http.Server{
@@ -41,7 +38,7 @@ func main() {
 		}
 	}()
 
-	sigChan := make(chan os.Signal, 3)
+	sigChan := make(chan os.Signal, 2)
 	signal.Notify(sigChan, os.Interrupt)
 
 	sig := <-sigChan
