@@ -10,7 +10,7 @@ import (
 )
 
 type LinksHandler struct {
-	l *loggers.AggregatedLoggers
+	logger *loggers.AggregatedLoggers
 }
 
 func NewLinksHandler(l *loggers.AggregatedLoggers) *LinksHandler {
@@ -18,12 +18,12 @@ func NewLinksHandler(l *loggers.AggregatedLoggers) *LinksHandler {
 }
 
 func (lh LinksHandler) FindAllLinks(rw http.ResponseWriter, r *http.Request) {
-	lh.l.Println("[INFO] Get links request")
+	lh.logger.Println("[INFO] Get links request")
 
 	var rd dto.LinksRequestData
 	err := json.NewDecoder(r.Body).Decode(&rd)
 	if err != nil {
-		lh.l.Println("[ERROR] Decoding failed, stop processing")
+		lh.logger.Println("[ERROR] Decoding failed, stop processing")
 
 		rw.WriteHeader(http.StatusBadRequest)
 		rw.Write([]byte("Invalid object body, must be dto.LinksRequestData"))
@@ -32,7 +32,7 @@ func (lh LinksHandler) FindAllLinks(rw http.ResponseWriter, r *http.Request) {
 
 	resp, err := http.Get(rd.Link)
 	if err != nil {
-		lh.l.Println("[ERROR] Can't receive response from given source, stop processing")
+		lh.logger.Println("[ERROR] Can't receive response from given source, stop processing")
 
 		rw.WriteHeader(http.StatusBadGateway)
 		rw.Write([]byte("Response from given source wasn't received. Check your URL or try later"))
@@ -41,7 +41,7 @@ func (lh LinksHandler) FindAllLinks(rw http.ResponseWriter, r *http.Request) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		lh.l.Println("Status code is not OK, stop processing")
+		lh.logger.Println("Status code is not OK, stop processing")
 
 		rw.WriteHeader(http.StatusBadGateway)
 		rw.Write([]byte("Response from given source is not OK"))
@@ -50,7 +50,7 @@ func (lh LinksHandler) FindAllLinks(rw http.ResponseWriter, r *http.Request) {
 
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		lh.l.Println("[ERROR] Can't read response body")
+		lh.logger.Println("[ERROR] Can't read response body")
 
 		rw.WriteHeader(http.StatusInternalServerError)
 		rw.Write([]byte("Error when reading response body"))
@@ -58,13 +58,22 @@ func (lh LinksHandler) FindAllLinks(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	bodyString := string(bodyBytes)
-
-	reg := regexp.MustCompile(`href="[^"]*://[^"]*"`)
-	entries := reg.FindAllString(bodyString, -1)
+	entries := getAllHrefPartsFromStringifiedBody(bodyString)
 
 	rw.WriteHeader(http.StatusOK)
 	for _, v := range entries {
-		rw.Write([]byte(v[5:]))
+		ref := getReferenceFromHref(v)
+		rw.Write([]byte(ref))
 		rw.Write([]byte("\n"))
 	}
+}
+
+func getAllHrefPartsFromStringifiedBody(str string) []string {
+	reg := regexp.MustCompile(`href="[^"]*://[^"]*"`)
+	return reg.FindAllString(str, -1)
+}
+
+func getReferenceFromHref(hrefMatch string) string {
+	// hrefMatch is a string like `href="required-reference.org"`
+	return hrefMatch[6 : len(hrefMatch)-1]
 }

@@ -29,7 +29,7 @@ func main() {
 	ph := handlers.NewPinger(logger)
 
 	sm := mux.NewRouter()
-	sm.HandleFunc("/", ph.Ping)
+	sm.HandleFunc("/", ph.Handle)
 	sm.HandleFunc("/get-links", lh.FindAllLinks)
 
 	server := &http.Server{
@@ -40,6 +40,10 @@ func main() {
 		WriteTimeout: 3 * time.Second,
 	}
 
+	startInterruptedServerAsync(server, logger)
+}
+
+func startInterruptedServerAsync(server *http.Server, logger *loggers.AggregatedLoggers) {
 	go func() {
 		logger.Println("Starting server on port 9091")
 
@@ -50,6 +54,10 @@ func main() {
 		}
 	}()
 
+	useUserInterrupt(server, logger)
+}
+
+func useUserInterrupt(server *http.Server, logger *loggers.AggregatedLoggers) {
 	sigChan := make(chan os.Signal, 2)
 	signal.Notify(sigChan, os.Interrupt)
 
