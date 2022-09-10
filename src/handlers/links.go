@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"regexp"
+
 	"proxy/src/dto"
 	"proxy/src/loggers"
-	"regexp"
 )
 
 type LinksHandler struct {
@@ -19,7 +20,6 @@ func NewLinksHandler(l *loggers.AggregatedLoggers) *LinksHandler {
 
 func (lh LinksHandler) FindAllLinks(rw http.ResponseWriter, r *http.Request) {
 	lh.logger.Println("[INFO] Get links request")
-
 	var rd dto.LinksRequestData
 	err := json.NewDecoder(r.Body).Decode(&rd)
 	if err != nil {
@@ -32,7 +32,7 @@ func (lh LinksHandler) FindAllLinks(rw http.ResponseWriter, r *http.Request) {
 
 	resp, err := http.Get(rd.Link)
 	if err != nil {
-		lh.logger.Println("[ERROR] Can't receive response from given source, stop processing")
+		lh.logger.Println("[ERROR] Can't receive response from given source, stop processing", err)
 
 		rw.WriteHeader(http.StatusBadGateway)
 		rw.Write([]byte("Response from given source wasn't received. Check your URL or try later"))
@@ -58,7 +58,7 @@ func (lh LinksHandler) FindAllLinks(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	bodyString := string(bodyBytes)
-	entries := getAllHrefPartsFromStringifiedBody(bodyString)
+	entries := getAllHrefPartsFromStringifyBody(bodyString)
 
 	rw.WriteHeader(http.StatusOK)
 	for _, v := range entries {
@@ -68,7 +68,7 @@ func (lh LinksHandler) FindAllLinks(rw http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getAllHrefPartsFromStringifiedBody(str string) []string {
+func getAllHrefPartsFromStringifyBody(str string) []string {
 	reg := regexp.MustCompile(`href="[^"]*://[^"]*"`)
 	return reg.FindAllString(str, -1)
 }

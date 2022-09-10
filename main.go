@@ -7,9 +7,10 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"time"
+
 	"proxy/src/handlers"
 	"proxy/src/loggers"
-	"time"
 
 	"github.com/gorilla/mux"
 )
